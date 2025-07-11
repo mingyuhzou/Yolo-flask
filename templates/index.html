@@ -1,16 +1,75 @@
 <!doctype html>
-<html>
+<html lang="zh">
 
 <head>
-    <title>YOLO视频检测</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO 视频目标检测</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>上传视频进行目标检测</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" accept="video/*" required>
-        <input type="submit" value="上传并处理">
-    </form>
+    <div class="container">
+        <h1>YOLO 视频目标检测</h1>
+        <p style="text-align:center;color:#555;">请选择一个视频文件进行上传，我们将自动分析目标并生成检测结果。</p>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept="video/*" required>
+            <input type="submit" value="上传并处理">
+        </form>
+    </div>
 </body>
 
 </html>
