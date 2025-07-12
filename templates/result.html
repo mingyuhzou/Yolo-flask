@@ -57,12 +57,21 @@
         .btn-group a:hover {
             background-color: #45a049;
         }
+
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1>检测完成，预览结果：</h1>
+        {% if video_path.endswith(('.mp4','.avi','.mov'))%}
         <video controls>
             <source src="{{ video_path }}" type="video/mp4">
             您的浏览器不支持视频播放。
@@ -71,6 +80,14 @@
             <a href="{{ download_url }}">点击下载处理后视频</a>
             <a href="/">返回首页</a>
         </div>
+        {% else %}
+        <img src="{{ video_path }}" alt="'检测图片结果" style="max-width:100%" />
+        <div class="btn-group">
+            <a href="{{ download_url }}">点击下载处理后图片</a>
+            <a href="/">返回首页</a>
+        </div>
+        {% endif %}
+
     </div>
 </body>
 

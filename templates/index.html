@@ -109,7 +109,7 @@
         <h1>YOLO 视频目标检测</h1>
         <p class="description">上传视频并选择你想追踪的目标类别（支持多选）</p>
         <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" accept="video/*" required>
+            <input type="file" name="file" accept="video/* image/*" required>
 
             <div class="checkbox-group" title="选择你想追踪的类别">
                 <label><input type="checkbox" name="classes" value="0" checked> 行人 (person, 0)</label>
@@ -118,9 +118,9 @@
                 <label><input type="checkbox" name="classes" value="7"> 卡车 (truck, 7)</label>
                 <label><input type="checkbox" name="classes" value="1"> 自行车 (bicycle, 1)</label>
                 <label><input type="checkbox" name="classes" value="3"> 摩托车 (motorcycle, 3)</label>
-                <label><input type="checkbox" name="classes" value="6"> 火车 (train, 6)</label>
+                <label><input type="checkbox" name="classes" value="18"> 马 (horse, 18)</label>
                 <label><input type="checkbox" name="classes" value="9"> 交通灯 (traffic light, 9)</label>
-                <label><input type="checkbox" name="classes" value="12"> 停车标志 (stop sign, 12)</label>
+                <label><input type="checkbox" name="classes" value="15"> 猫 (cat, 15)</label>
                 <label><input type="checkbox" name="classes" value="17"> 狗 (dog, 17)</label>
             </div>
 

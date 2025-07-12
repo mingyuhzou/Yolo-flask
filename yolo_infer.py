@@ -8,11 +8,17 @@ from time import time
 import subprocess
 import os 
 
+'''
+  使用opencv处理后的mp4的编码与浏览器不兼容，需要使用FFmpeg转码为H.264 
+'''
+
 def convert(path):
     tmp_path=path+'.tmp.mp4'
-    print(path)
+    # 没有直接的包可以进行转换，需要下载FFmpeg再用命令行的方式处理
     subprocess.run(['ffmpeg','-y','-i',path,'-vcodec','libx264','-acodec','aac',tmp_path],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    # 替换源文件
     os.replace(tmp_path,path)
+
 
 def process_video(input_path, output_path, classes):
     if torch.cuda.is_available():
@@ -105,3 +111,16 @@ def process_video(input_path, output_path, classes):
     out.release()
     convert(output_path)
     print('[INFO] Process completed. Output saved to:', output_path)
+
+
+def process_image(input_path,output_path,classes):
+    if torch.cuda.is_available():
+        model=YOLO('weights/yolov8s.pt')
+    else:
+        model=YOLO('weights/yolov8s.onnx')
+    
+    img=cv2.imread(input_path)
+    results=model(img,classes=classes,conf=0.4)
+    annotated_img=results[0].plot()
+    cv2.imwrite(output_path,annotated_img)
+
