@@ -5,9 +5,16 @@ import numpy as np
 from ultralytics import YOLO
 from collections import defaultdict
 from time import time
+import subprocess
+import os 
 
-def process_video(input_path, output_path):
-    # 模型选择
+def convert(path):
+    tmp_path=path+'.tmp.mp4'
+    print(path)
+    subprocess.run(['ffmpeg','-y','-i',path,'-vcodec','libx264','-acodec','aac',tmp_path],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    os.replace(tmp_path,path)
+
+def process_video(input_path, output_path, classes):
     if torch.cuda.is_available():
         model = YOLO('weights/yolov8s.pt')
         print('[INFO] Using GPU')
@@ -30,19 +37,17 @@ def process_video(input_path, output_path):
     trk_previous_points = {}
     reg_pts = [(0, int(height / 2)), (width, int(height / 2))]
 
-    # 计数相关变量
-    reg_line_y = int(height / 2)   # 中线纵坐标
-    counted_ids = set()             # 已计数ID集合
-    object_count = 0                # 计数总数
-    previous_y = {}                 # 记录每个目标上一帧的y坐标
+    reg_line_y = int(height / 2)
+    counted_ids = set()
+    object_count = 0
+    previous_y = {}
 
     while True:
         ret, frame = kamera.read()
         if not ret:
             break
 
-        # 目标检测与跟踪：这里只跟踪车辆类别，可根据需要调整 classes
-        results = model.track(frame, conf=0.4, classes=[2, 5, 7], persist=True, verbose=False)
+        results = model.track(frame, conf=0.4, classes=classes, persist=True, verbose=False)
 
         for r in results[0]:
             if r.boxes.id is None:
@@ -52,24 +57,21 @@ def process_video(input_path, output_path):
 
             for box, trk_id in zip(boxes_wh, track_ids):
                 x, y, w, h = box
-                y = float(y)  # 当前帧目标中心点纵坐标
+                y = float(y)
 
-                # 更新轨迹
                 track = trk_history[trk_id]
                 track.append((x, y))
                 if len(track) > 30:
                     track.pop(0)
 
-                # 计数逻辑：判断是否穿越中线（由上向下）
                 if trk_id in previous_y:
                     if previous_y[trk_id] < reg_line_y <= y and trk_id not in counted_ids:
                         object_count += 1
                         counted_ids.add(trk_id)
                         print(f"[COUNT] ID {trk_id} crossed the line → Total: {object_count}")
 
-                previous_y[trk_id] = y  # 更新上一帧y坐标
+                previous_y[trk_id] = y
 
-                # 速度估算（保持不变）
                 if trk_id not in trk_previous_times:
                     trk_previous_times[trk_id] = 0
 
@@ -92,13 +94,8 @@ def process_video(input_path, output_path):
                 trk_previous_times[trk_id] = time()
                 trk_previous_points[trk_id] = (x, y)
 
-        # 使用 YOLO 自带绘制框和标签
         annotation_frame = results[0].plot()
-
-        # 画中线
         cv2.line(annotation_frame, reg_pts[0], reg_pts[1], (0, 255, 0), 2)
-
-        # 画计数文字
         cv2.putText(annotation_frame, f"Count: {object_count}", (20, 40),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 3)
 
@@ -106,4 +103,5 @@ def process_video(input_path, output_path):
 
     kamera.release()
     out.release()
+    convert(output_path)
     print('[INFO] Process completed. Output saved to:', output_path)
