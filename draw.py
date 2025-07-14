@@ -7,7 +7,7 @@ def Color(cls_id):
     random.seed(cls_id)
     return (random.randint(0,255),random.randint(0,255), random.randint(0,255)) 
 
-def plot(frame,results,speed_d):
+def plot(frame,results,speed_d,enable_speed):
     if not results or results[0].boxes is None:return frame
     boxes=results[0].boxes
 
@@ -21,7 +21,7 @@ def plot(frame,results,speed_d):
         label=f'ID: {trk_id}'
         cv2.putText(frame,label,(int(x1),int(y1)-10),cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
         
-        if trk_id in speed_d:
+        if trk_id in speed_d and enable_speed:
             speed=speed_d[trk_id]
             speed_label=f'{speed:.2f} px/s'
             cv2.putText(frame, speed_label, (int(x1), int(y2) + 20),

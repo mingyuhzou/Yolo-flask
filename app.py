@@ -26,6 +26,8 @@ def index():
         # 转为int列表
         classes = list(map(int, selected_classes))
 
+        enable_speed = 'enable_speed' in request.form
+
         suff=filename.split('.')[-1]
 
         output_filename = os.path.splitext(filename)[0] + f'_output.{suff}'
@@ -34,7 +36,7 @@ def index():
         print(output_path)
 
         if suff in {'mp4','mov','avi'}:
-            process_video(input_path, output_path, classes)    
+            process_video(input_path, output_path, classes,enable_speed)    
         else:
             process_image(input_path, output_path, classes)
         

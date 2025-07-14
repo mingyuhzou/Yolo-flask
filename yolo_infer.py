@@ -18,7 +18,7 @@ def convert(path):
     os.replace(tmp_path,path)
 
 # 视频处理逻辑
-def process_video(input_path, output_path, classes):
+def process_video(input_path, output_path, classes,enable_speed):
     # 判断宿主机环境，选择合适的权重文件
     if torch.cuda.is_available():
         model = YOLO('weights/yolov8s.pt')
@@ -101,7 +101,7 @@ def process_video(input_path, output_path, classes):
                 previous_y[trk_id] = y
                 prev_time[trk_id]=time()
 
-        annotation_frame = plot(frame.copy(),results,speed_d)
+        annotation_frame = plot(frame.copy(),results,speed_d,enable_speed)
         
         # 绘制中线
         cv2.line(annotation_frame, reg_pts[0], reg_pts[1], (0, 255, 0), 2)
