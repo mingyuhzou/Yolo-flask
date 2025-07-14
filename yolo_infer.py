@@ -8,10 +8,7 @@ from time import time
 import subprocess
 import os 
 
-'''
-  使用opencv处理后的mp4的编码与浏览器不兼容，需要使用FFmpeg转码为H.264 
-'''
-
+# 使用opencv处理后的mp4的编码与浏览器不兼容，需要使用FFmpeg转码为H.264 
 def convert(path):
     tmp_path=path+'.tmp.mp4'
     # 没有直接的包可以进行转换，需要下载FFmpeg再用命令行的方式处理
@@ -19,49 +16,58 @@ def convert(path):
     # 替换源文件
     os.replace(tmp_path,path)
 
-
+# 视频处理逻辑
 def process_video(input_path, output_path, classes):
+    # 判断宿主机环境，选择合适的权重文件
     if torch.cuda.is_available():
         model = YOLO('weights/yolov8s.pt')
         print('[INFO] Using GPU')
     else:
         model = YOLO('weights/yolov8s.onnx')
         print('[INFO] Using CPU')
-
+    
+    # 将视频文件转换为opcv对象
     kamera = cv2.VideoCapture(input_path)
+
+    # 获取一帧的宽高
     width = int(kamera.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(kamera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # 获取帧率
     fps = kamera.get(cv2.CAP_PROP_FPS)
-
+    
+    # 初始化写入视频文件的对象，把图像帧保存为mp4格式的文件
     out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
 
     trk_history = defaultdict(list)
-    dist_data = {}
-    trk_idslist = []
-    spdl_dist_thresh = 10
-    trk_previous_times = {}
-    trk_previous_points = {}
+
+    # 中线坐标
     reg_pts = [(0, int(height / 2)), (width, int(height / 2))]
 
     reg_line_y = int(height / 2)
     counted_ids = set()
     object_count = 0
+    # 更新每个对象上一时刻的纵坐标
     previous_y = {}
 
     while True:
+        # 获取每一帧，ret指示是否获取成功
         ret, frame = kamera.read()
         if not ret:
             break
-
+        
+        # classes设置要追踪那些对象，persist是否保留追踪状态
         results = model.track(frame, conf=0.4, classes=classes, persist=True, verbose=False)
 
+        # 存储了所有识别出的置信框
         for r in results[0]:
             if r.boxes.id is None:
                 continue
+            # 在GPU环境下返回张量，转换回数组类型
             boxes_wh = r.boxes.xywh.cpu().tolist()
             track_ids = r.boxes.id.int().cpu().tolist()
 
             for box, trk_id in zip(boxes_wh, track_ids):
+                # 中心点坐标
                 x, y, w, h = box
                 y = float(y)
 
@@ -70,57 +76,41 @@ def process_video(input_path, output_path, classes):
                 if len(track) > 30:
                     track.pop(0)
 
+                # 检测是否过线
                 if trk_id in previous_y:
+                    # 如果上一时刻在线上，这一时刻在线下，并且这个对象没有记录过
                     if previous_y[trk_id] < reg_line_y <= y and trk_id not in counted_ids:
                         object_count += 1
                         counted_ids.add(trk_id)
                         print(f"[COUNT] ID {trk_id} crossed the line → Total: {object_count}")
-
+                # 更新
                 previous_y[trk_id] = y
 
-                if trk_id not in trk_previous_times:
-                    trk_previous_times[trk_id] = 0
-
-                if reg_pts[0][0] < x < reg_pts[1][0]:
-                    if reg_pts[1][1] - spdl_dist_thresh < y < reg_pts[1][1] + spdl_dist_thresh:
-                        direction = "known"
-                    elif reg_pts[0][1] - spdl_dist_thresh < y < reg_pts[0][1] + spdl_dist_thresh:
-                        direction = "known"
-                    else:
-                        direction = "unknown"
-
-                if trk_previous_times.get(trk_id) != 0 and direction != "unknown" and trk_id not in trk_idslist:
-                    trk_idslist.append(trk_id)
-                    time_difference = time() - trk_previous_times[trk_id]
-                    if time_difference > 0:
-                        dist_difference = np.abs(y - trk_previous_points[trk_id][1])
-                        speed = dist_difference / time_difference
-                        dist_data[trk_id] = speed
-
-                trk_previous_times[trk_id] = time()
-                trk_previous_points[trk_id] = (x, y)
-
         annotation_frame = results[0].plot()
+        
+        # 绘制中线
         cv2.line(annotation_frame, reg_pts[0], reg_pts[1], (0, 255, 0), 2)
         cv2.putText(annotation_frame, f"Count: {object_count}", (20, 40),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 3)
 
         out.write(annotation_frame)
-
+    # 释放资源
     kamera.release()
     out.release()
+    # 转换视频编码
     convert(output_path)
     print('[INFO] Process completed. Output saved to:', output_path)
 
-
+# 图像处理逻辑
 def process_image(input_path,output_path,classes):
+    # 选择环境
     if torch.cuda.is_available():
         model=YOLO('weights/yolov8s.pt')
     else:
         model=YOLO('weights/yolov8s.onnx')
     
+    # 直接识别
     img=cv2.imread(input_path)
     results=model(img,classes=classes,conf=0.4)
     annotated_img=results[0].plot()
     cv2.imwrite(output_path,annotated_img)
-

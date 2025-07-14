@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, send_from_directory, url_for
 import os
 from werkzeug.utils import secure_filename
-from yolo_infer import process_video,process_image  # 你的视频处理逻辑
+from yolo_infer import process_video,process_image  # 视频处理逻辑
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'static/uploads'
