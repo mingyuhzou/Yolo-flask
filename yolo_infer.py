@@ -7,6 +7,7 @@ from collections import defaultdict
 from time import time
 import subprocess
 import os 
+from draw import plot
 
 # 使用opencv处理后的mp4的编码与浏览器不兼容，需要使用FFmpeg转码为H.264 
 def convert(path):
@@ -48,6 +49,10 @@ def process_video(input_path, output_path, classes):
     object_count = 0
     # 更新每个对象上一时刻的纵坐标
     previous_y = {}
+    
+    thred=10
+    prev_time={}
+    speed_d={}
 
     while True:
         # 获取每一帧，ret指示是否获取成功
@@ -84,9 +89,19 @@ def process_video(input_path, output_path, classes):
                         counted_ids.add(trk_id)
                         print(f"[COUNT] ID {trk_id} crossed the line → Total: {object_count}")
                 # 更新
-                previous_y[trk_id] = y
 
-        annotation_frame = results[0].plot()
+                if reg_line_y-thred<=y<=reg_line_y+thred:
+                    if trk_id not in prev_time:
+                        prev_time[trk_id]=time()
+                    else:
+                        diff_time=time()-prev_time[trk_id]
+                        dis=abs(y-previous_y[trk_id])
+                        speed_d[trk_id]=dis/diff_time
+
+                previous_y[trk_id] = y
+                prev_time[trk_id]=time()
+
+        annotation_frame = plot(frame.copy(),results,speed_d)
         
         # 绘制中线
         cv2.line(annotation_frame, reg_pts[0], reg_pts[1], (0, 255, 0), 2)
