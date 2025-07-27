@@ -7,9 +7,9 @@ def Color(cls_id):
     random.seed(cls_id)
     return (random.randint(0,255),random.randint(0,255), random.randint(0,255)) 
 
-def plot(frame,results,speed_d,enable_speed):
-    if not results or results[0].boxes is None:return frame
-    boxes=results[0].boxes
+def plot(frame,result,speed_d,enable_speed):
+    if not result or result.boxes is None:return frame
+    boxes=result.boxes
 
     boxes_xyxy=boxes.xyxy.cpu().tolist()
     ids=boxes.id.int().cpu().tolist()

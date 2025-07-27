@@ -64,44 +64,44 @@ def process_video(input_path, output_path, classes,enable_speed):
         results = model.track(frame, conf=0.4, classes=classes, persist=True, verbose=False)
 
         # 存储了所有识别出的置信框
-        for r in results[0]:
-            if r.boxes.id is None:
-                continue
-            # 在GPU环境下返回张量，转换回数组类型
-            boxes_wh = r.boxes.xywh.cpu().tolist()
-            track_ids = r.boxes.id.int().cpu().tolist()
+        r=results[0]
+        if r.boxes.id is None:
+            continue
+        # 在GPU环境下返回张量，转换回数组类型
+        boxes_wh = r.boxes.xywh.cpu().tolist()
+        track_ids = r.boxes.id.int().cpu().tolist()
 
-            for box, trk_id in zip(boxes_wh, track_ids):
-                # 中心点坐标
-                x, y, w, h = box
-                y = float(y)
+        for box, trk_id in zip(boxes_wh, track_ids):
+            # 中心点坐标
+            x, y, w, h = box
+            y = float(y)
 
-                track = trk_history[trk_id]
-                track.append((x, y))
-                if len(track) > 30:
-                    track.pop(0)
+            track = trk_history[trk_id]
+            track.append((x, y))
+            if len(track) > 30:
+                track.pop(0)
 
-                # 检测是否过线
-                if trk_id in previous_y:
-                    # 如果上一时刻在线上，这一时刻在线下，并且这个对象没有记录过
-                    if previous_y[trk_id] < reg_line_y <= y and trk_id not in counted_ids:
-                        object_count += 1
-                        counted_ids.add(trk_id)
-                        print(f"[COUNT] ID {trk_id} crossed the line → Total: {object_count}")
-                # 更新
+            # 检测是否过线
+            if trk_id in previous_y:
+                # 如果上一时刻在线上，这一时刻在线下，并且这个对象没有记录过
+                if previous_y[trk_id] < reg_line_y <= y and trk_id not in counted_ids:
+                    object_count += 1
+                    counted_ids.add(trk_id)
+                    print(f"[COUNT] ID {trk_id} crossed the line → Total: {object_count}")
+            # 更新
 
-                if reg_line_y-thred<=y<=reg_line_y+thred:
-                    if trk_id not in prev_time:
-                        prev_time[trk_id]=time()
-                    else:
-                        diff_time=time()-prev_time[trk_id]
-                        dis=abs(y-previous_y[trk_id])
-                        speed_d[trk_id]=dis/diff_time
+            if reg_line_y-thred<=y<=reg_line_y+thred:
+                if trk_id not in prev_time:
+                    prev_time[trk_id]=time()
+                else:
+                    diff_time=time()-prev_time[trk_id]
+                    dis=abs(y-previous_y[trk_id])
+                    speed_d[trk_id]=dis/diff_time
 
-                previous_y[trk_id] = y
-                prev_time[trk_id]=time()
+            previous_y[trk_id] = y
+            prev_time[trk_id]=time()
 
-        annotation_frame = plot(frame.copy(),results,speed_d,enable_speed)
+        annotation_frame = plot(frame.copy(),results[0],speed_d,enable_speed)
         
         # 绘制中线
         cv2.line(annotation_frame, reg_pts[0], reg_pts[1], (0, 255, 0), 2)
